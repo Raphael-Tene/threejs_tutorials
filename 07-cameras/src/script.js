@@ -61,6 +61,7 @@ camera.lookAt(mesh.position);
 scene.add(camera);
 
 // Controls
+// @ts-ignore
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.autoRotate = true;
