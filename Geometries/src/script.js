@@ -14,7 +14,36 @@ const scene = new THREE.Scene();
 /**
  * Object
  */
-const geometry = new THREE.BoxGeometry(1, 1, 1, 2, 2, 2);
+
+// creating a triangle
+// create a float32 array of 3 vertices
+// const positionsArray = new Float32Array([0, 0, 0, 0, 1, 0, 1, 0, 0]);
+
+// // create position attribute
+// const positionsAttribute = new THREE.BufferAttribute(positionsArray, 3);
+
+// create a buffer geometry
+const geometry = new THREE.BufferGeometry();
+
+// create a variable with value 50
+const count = 50;
+// create Float32Array with 3 * 50 = 150 values
+const positionsArray = new Float32Array(count * 3 * 3);
+
+// loop through the array and set the values
+for (let i = 0; i < count * 3 * 3; i++) {
+  positionsArray[i] = (Math.random() - 0.5) * 4;
+}
+
+// create position attribute
+const positionsAttribute = new THREE.BufferAttribute(positionsArray, 3);
+// set the position attribute to the geometry
+geometry.setAttribute("position", positionsAttribute);
+
+// // set the position attribute to the geometry
+// geometry.setAttribute("position", positionsAttribute);
+
+// const geometry = new THREE.BoxGeometry(1, 1, 1, 2, 2, 2);
 const material = new THREE.MeshBasicMaterial({
   color: 0xff0000,
   wireframe: true,
