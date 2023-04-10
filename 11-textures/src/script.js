@@ -3,6 +3,11 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 // @ts-ignore
 import imageSource from "/textures/door/color.jpg";
 
+// keep in mind these three things when choosing textures
+// Weight - size of the textures: jpg is more lighter than png files - uou can compress files using tinypng.com website
+// Sizes -
+// Data
+
 // One way of loading textures
 //  create a new image
 // const image = new Image();
@@ -25,17 +30,40 @@ loadingManager.onLoad = () => {};
 loadingManager.onProgress = () => {};
 loadingManager.onError = () => {};
 
+// create a texture loader
 const textureLoader = new THREE.TextureLoader();
 // load the texture
-const colorTexture = textureLoader.load(imageSource);
-const alphaTexture = textureLoader.load("/textures/door/alpha.jpg");
-const heightTexture = textureLoader.load("/textures/door/height.jpg");
-const normalTexture = textureLoader.load("/textures/door/normal.jpg");
-const ambientOcclusionTexture = textureLoader.load(
-  "/textures/door/ambientOcclusion.jpg"
-);
-const metalnessTexture = textureLoader.load("/textures/door/metalness.jpg");
-const roughnessTexture = textureLoader.load("/textures/door/roughness.jpg");
+const boxTexture = textureLoader.load("/textures/door/sphere.png");
+// repeat texture
+// boxTexture.repeat.x = 2;
+// boxTexture.repeat.y = 3;
+// // wrap texture
+// boxTexture.wrapS = THREE.RepeatWrapping;
+// boxTexture.wrapT = THREE.RepeatWrapping;
+
+// mirror texture
+// boxTexture.wrapS = THREE.MirroredRepeatWrapping;
+// boxTexture.wrapT = THREE.MirroredRepeatWrapping;
+
+// offset texture
+// boxTexture.offset.x = 0.5;
+// boxTexture.offset.y = 0.5;
+
+// rotate texture
+// boxTexture.rotation = Math.PI * 0.25;
+// change rotation vertex
+// boxTexture.center.x = 0.5;
+// boxTexture.center.y = 0.5;
+
+// mipmapping - reduce the size of the texture if it is too big
+// filtering - how the texture is filtered
+// minification filter
+// use this filter if the texture is too big
+boxTexture.minFilter = THREE.NearestFilter;
+// NearestFilter improves sharpness
+
+// use the magFilter to increase the size of the texture if the texture is too small
+// boxTexture.magFilter = THREE.NearestFilter;
 
 /**
  * Base
@@ -51,7 +79,7 @@ const scene = new THREE.Scene();
  */
 const geometry = new THREE.BoxGeometry(1, 1, 1);
 // load texture on material
-const material = new THREE.MeshBasicMaterial({ map: ambientOcclusionTexture });
+const material = new THREE.MeshBasicMaterial({ map: boxTexture });
 const mesh = new THREE.Mesh(geometry, material);
 
 scene.add(mesh);
