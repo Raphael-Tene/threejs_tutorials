@@ -1,5 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+// import lil-gui
+import * as dat from "lil-gui";
 
 /**
  * Base
@@ -21,6 +23,11 @@ const doorNormalTexture = textureLoader.load("/textures/door/normal.jpg");
 const doorRoughnessTexture = textureLoader.load("/textures/door/roughness.jpg");
 const matcapTexture = textureLoader.load("/textures/matcaps/1.png");
 const gradientTexture = textureLoader.load("/textures/gradients/3.jpg");
+// add minFilter to gradientTexture to improve sharpness
+gradientTexture.minFilter = THREE.NearestFilter;
+gradientTexture.magFilter = THREE.NearestFilter;
+// deactivate mipmaping
+gradientTexture.generateMipmaps = false;
 
 // create 3 geometry objects
 
@@ -57,7 +64,32 @@ sphereTexture.minFilter = THREE.NearestFilter;
 // const material = new THREE.MeshMatcapMaterial({ matcap: matcapTexture });
 
 // create a mesh depth material
-const material = new THREE.MeshDepthMaterial();
+// const material = new THREE.MeshDepthMaterial()
+
+// create a mesh lambert material
+// const material = new THREE.MeshLambertMaterial();
+
+// create a mesh phong material
+// const material = new THREE.MeshPhongMaterial();
+// material.shininess = 1000;
+// material.specular = new THREE.Color(0x1188ff);
+
+// create a mesh toon material
+// const material = new THREE.MeshToonMaterial();
+// // add a gradient map to the material
+// material.gradientMap = gradientTexture;
+
+// create a mesh standard material - this material uses the physical based rendering model
+//  it support metalness and roughness with a more realistic look
+const material = new THREE.MeshStandardMaterial();
+// change metalness and roughness
+material.metalness = 0.7;
+material.roughness = 0.2;
+
+// add debug gui
+const gui = new dat.GUI({ width: 340 });
+gui.add(material, "metalness").min(0).max(1).step(0.0001);
+gui.add(material, "roughness").min(0).max(1).step(0.0001);
 
 // create a mesh with the geometry and material
 const sphere = new THREE.Mesh(sphereGeometry, material);
@@ -71,6 +103,21 @@ torus.position.x = 1.5;
 // Scene
 const scene = new THREE.Scene();
 scene.add(sphere, torus, plane);
+
+// create some lights
+// create ambient light
+// first parameter is the color of the light and the second is the intensity
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+// add the light to the scene
+scene.add(ambientLight);
+// create a positional light
+const pointLight = new THREE.PointLight(0xffffff, 0.5);
+// set the position of the light
+pointLight.position.x = 2;
+pointLight.position.y = 3;
+pointLight.position.z = 4;
+// add the light to the scene
+scene.add(pointLight);
 
 /**
  * Sizes
