@@ -34,6 +34,7 @@ loadingManager.onError = () => {};
 const textureLoader = new THREE.TextureLoader();
 // load the texture
 const boxTexture = textureLoader.load("/textures/door/sphere.png");
+
 // repeat texture
 // boxTexture.repeat.x = 2;
 // boxTexture.repeat.y = 3;
