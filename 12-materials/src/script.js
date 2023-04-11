@@ -9,7 +9,19 @@ import * as dat from "lil-gui";
 // Canvas
 const canvas = document.querySelector("canvas.webgl");
 
-// create texture
+// create a cube texture loader: this is used to load a cube map (environments)
+const cubeTextureLoader = new THREE.CubeTextureLoader();
+// load the cube map
+const environmentMapTexture = cubeTextureLoader.load([
+  "/textures/environmentMaps/0/px.jpg",
+  "/textures/environmentMaps/0/nx.jpg",
+  "/textures/environmentMaps/0/py.jpg",
+  "/textures/environmentMaps/0/ny.jpg",
+  "/textures/environmentMaps/0/pz.jpg",
+  "/textures/environmentMaps/0/nz.jpg",
+]);
+
+// create texture loader
 const textureLoader = new THREE.TextureLoader();
 const sphereTexture = textureLoader.load("/textures/door/sphere.png");
 const doorColorTexture = textureLoader.load("/textures/door/color.jpg");
@@ -30,15 +42,17 @@ gradientTexture.magFilter = THREE.NearestFilter;
 gradientTexture.generateMipmaps = false;
 
 // create 3 geometry objects
-
+// first parameter is the radius, second is the width segments and the third is the height segments
 const sphereGeometry = new THREE.SphereGeometry(0.5, 16, 16);
-const planeGeometry = new THREE.PlaneGeometry(1, 1);
+// first parameter is the width, second is the height and the third is the depth, fourth is the width segments and the fifth is the height segments
+const planeGeometry = new THREE.PlaneGeometry(1, 1, 100, 100);
+// first parameter is the radius, second is the tube radius, third is the radial segments and the fourth is the tubular segments
 const torusGeometry = new THREE.TorusGeometry(0.3, 0.2, 16, 32);
 
 // texture minification filter
 sphereTexture.minFilter = THREE.NearestFilter;
 
-// create a mesh basic material
+// * create a mesh basic material
 // const material = new THREE.MeshBasicMaterial({ map: sphereTexture });
 // material methods
 // material.wireframe = true; - sets the material to wireframe
@@ -48,7 +62,6 @@ sphereTexture.minFilter = THREE.NearestFilter;
 //  material opacity - sets the opacity of the material
 // material.transparent = true;
 // material.alphaMap = doorAlphaTexture;
-
 // side - let's decide which side of the material is visible
 // material.side = THREE.DoubleSide;
 // material.side = THREE.BackSide;
@@ -80,21 +93,54 @@ sphereTexture.minFilter = THREE.NearestFilter;
 // material.gradientMap = gradientTexture;
 
 // create a mesh standard material - this material uses the physical based rendering model
-//  it support metalness and roughness with a more realistic look
+//  it supports metalness and roughness with a more realistic look
+// const material = new THREE.MeshStandardMaterial();
+// // change metalness and roughness
+// // material.metalness = 0.7;
+// // material.roughness = 0.2;
+// material.map = doorColorTexture;
+// // add displacement map
+// material.displacementMap = doorHeightTexture;
+// // change the scale of the displacement map
+// material.displacementScale = 0.05;
+// // add metalness map
+// material.metalnessMap = doorMetalnessTexture;
+// // add roughness map
+// material.roughnessMap = doorRoughnessTexture;
+// // normal map
+// material.normalMap = doorNormalTexture;
+
+// // !material aoMap - sets the ambient occlusion map, this makes crevices darker
+// material.aoMap = doorAmbientOcclusionTexture;
+// // you can change the strength of the ambient occlusion map
+// material.aoMapIntensity = 1;
+
+// a new mesh standard material with a metalness and roughness values
+
 const material = new THREE.MeshStandardMaterial();
-// change metalness and roughness
 material.metalness = 0.7;
 material.roughness = 0.2;
+// add environment map
+material.envMap = environmentMapTexture;
 
 // add debug gui
 const gui = new dat.GUI({ width: 340 });
 gui.add(material, "metalness").min(0).max(1).step(0.0001);
 gui.add(material, "roughness").min(0).max(1).step(0.0001);
+gui.add(material, "aoMapIntensity").min(0).max(10).step(0.0001);
+gui.add(material, "displacementScale").min(0).max(1).step(0.0001);
 
 // create a mesh with the geometry and material
 const sphere = new THREE.Mesh(sphereGeometry, material);
 const plane = new THREE.Mesh(planeGeometry, material);
 const torus = new THREE.Mesh(torusGeometry, material);
+
+// add uv2 to the plane
+plane.geometry.setAttribute(
+  "uv2",
+  // @ts-ignore
+  new THREE.BufferAttribute(plane.geometry.attributes.uv.array, 2)
+);
 
 sphere.position.x = -1.5;
 plane.position.x = 0;
@@ -103,6 +149,11 @@ torus.position.x = 1.5;
 // Scene
 const scene = new THREE.Scene();
 scene.add(sphere, torus, plane);
+
+// mesh materials that does not support light
+// mesh basic material
+// mesh depth material
+// mesh normal material
 
 // create some lights
 // create ambient light
