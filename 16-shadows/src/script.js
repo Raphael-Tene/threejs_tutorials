@@ -27,6 +27,11 @@ const canvas = document.querySelector("canvas.webgl");
 // Scene
 const scene = new THREE.Scene();
 
+// Textures
+// load a shadow texture for the plane
+const textureLoader = new THREE.TextureLoader();
+const simpleShadow = textureLoader.load("/textures/simpleShadow.jpg");
+
 /**
  * Lights
  */
@@ -40,14 +45,44 @@ const spotLight = new THREE.SpotLight(0xffffff, 0.5, 10, Math.PI * 0.3);
 // set spot light position
 spotLight.position.set(0, 2, 2);
 // set spot light to cast shadow
-spotLight.castShadow = true;
+// spotLight.castShadow = true;
 // set the target of the spot light
 scene.add(spotLight.target);
+// change spotlight shadow map size
+spotLight.shadow.mapSize.width = 1024;
+spotLight.shadow.mapSize.height = 1024;
+// change spotlight camera fov
+spotLight.shadow.camera.fov = 30;
+// change spotlight camera near and far plane
+spotLight.shadow.camera.near = 1;
+spotLight.shadow.camera.far = 6;
 // add spotlight to the scene
 scene.add(spotLight);
 
 const spotLightCameraHelper = new THREE.CameraHelper(spotLight.shadow.camera);
+spotLightCameraHelper.visible = false;
 scene.add(spotLightCameraHelper);
+
+// Point light
+const pointLight = new THREE.PointLight(0xff0000, 0.3);
+// set point light position
+pointLight.position.set(-1, 1, 0);
+// set point light to cast shadow
+// pointLight.castShadow = true;
+// change pointlight shadow map size
+pointLight.shadow.mapSize.width = 1024;
+pointLight.shadow.mapSize.height = 1024;
+// change pointlight camera near and far plane
+pointLight.shadow.camera.near = 0.1;
+pointLight.shadow.camera.far = 5;
+// add pointlight to the scene
+scene.add(pointLight);
+
+// create a point light helper
+const pointLightCameraHelper = new THREE.CameraHelper(pointLight.shadow.camera);
+// hide point light helper when done using it
+pointLightCameraHelper.visible = false;
+scene.add(pointLightCameraHelper);
 
 // Directional light
 const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
@@ -96,16 +131,35 @@ gui.add(material, "roughness").min(0).max(1).step(0.001);
  */
 const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.5, 32, 32), material);
 // set sphere to cast shadow
-sphere.castShadow = true;
+// sphere.castShadow = true;
 
 const plane = new THREE.Mesh(new THREE.PlaneGeometry(5, 5), material);
+
 plane.rotation.x = -Math.PI * 0.5;
 plane.position.y = -0.5;
 
 // add receive shadow to the object
 plane.receiveShadow = true;
 
-scene.add(sphere, plane);
+// create a new sphere shadow material
+
+const sphereShadow = new THREE.Mesh(
+  new THREE.PlaneGeometry(1.5, 1.5),
+  new THREE.MeshBasicMaterial({
+    color: 0x000000,
+    transparent: true,
+    alphaMap: simpleShadow,
+  })
+);
+
+// set the position of the sphereShadow
+sphereShadow.position.y = plane.position.y + 0.01;
+sphereShadow.rotation.x = -Math.PI * 0.5;
+
+// instead of casting shadow from the source of light, we can use a baked shadow map
+// this will improve the performance of the scene
+
+scene.add(sphere, plane, sphereShadow);
 
 /**
  * Sizes
@@ -181,6 +235,18 @@ const clock = new THREE.Clock();
 
 const tick = () => {
   const elapsedTime = clock.getElapsedTime();
+
+  // update the sphere  - animate( this code below will let the sphere move around the plane- bounce)
+  sphere.position.x = Math.cos(elapsedTime) * 1.5;
+  sphere.position.z = Math.sin(elapsedTime) * 1.5;
+  // abs forces a number to be positive
+  sphere.position.y = Math.abs(Math.sin(elapsedTime * 3));
+
+  // update the sphere shadow
+  sphereShadow.position.x = sphere.position.x;
+  sphereShadow.position.z = sphere.position.z;
+  // set the opacity of the shadow
+  sphereShadow.material.opacity = (1 - sphere.position.y) * 0.3;
 
   // Update controls
   controls.update();
