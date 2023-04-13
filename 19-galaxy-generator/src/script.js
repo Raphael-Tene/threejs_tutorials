@@ -43,6 +43,8 @@ let geometry = null;
 let material = null;
 let points = null;
 
+console.log(5 % 3);
+
 const galaxyGenerator = () => {
   // destroy the previous galaxy
   if (points !== null) {
@@ -95,6 +97,7 @@ const galaxyGenerator = () => {
     colors[i3 + 1] = mixedColor.g;
     colors[i3 + 2] = mixedColor.b;
   }
+
   // add the positions attribute to the geometry
   geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
   // add the colors attribute to the geometry

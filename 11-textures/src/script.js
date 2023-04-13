@@ -8,6 +8,33 @@ import imageSource from "/textures/door/color.jpg";
 // Sizes -
 // Data
 
+// materials have different types of maps
+// color map - color of the object
+// ambient occlusion map - darkens the object
+// normal map - adds a bump to the object
+// roughness map - adds a roughness to the object
+// metalness map - adds a metalness to the object
+// emissive map - adds a glow to the object
+// alpha map - adds a transparency to the object
+
+// load textures
+// To load a texture on a material, note that each material has different texture loading methods
+// for example, the MeshBasicMaterial has a map property
+// const material = new THREE.MeshBasicMaterial({ map: texture });
+// for the MeshStandardMaterial, the map property is called map
+// const material = new THREE.MeshStandardMaterial({ map: texture });
+// for the MeshToonMaterial, the map property is called gradientMap
+// const material = new THREE.MeshToonMaterial({ gradientMap: texture });
+
+// materials also have other properties that can be used to manipulate the texture
+// for example, the MeshBasicMaterial has a repeat property
+// const material = new THREE.MeshBasicMaterial({ map: texture, repeat: new THREE.Vector2(2, 3) });
+
+// magFilter - how the texture is filtered when the texture is too small
+// minFilter - how the texture is filtered when the texture is too big
+// texture.magFilter = THREE.NearestFilter;
+// texture.minFilter = THREE.NearestFilter;
+
 // One way of loading textures
 //  create a new image
 // const image = new Image();
