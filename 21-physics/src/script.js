@@ -1,12 +1,42 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import * as dat from "lil-gui";
-import CANNON from "cannon";
+import * as CANNON from "cannon-es";
 
 /**
  * Debug
  */
 const gui = new dat.GUI();
+const debugObject = {};
+
+debugObject.createSphere = () => {
+  createSphere(Math.random() * 0.5, {
+    x: (Math.random() - 0.5) * 3,
+    y: 3,
+    z: (Math.random() - 0.5) * 3,
+  });
+};
+
+debugObject.reset = () => {
+  for (const object of objectsToUpdate) {
+    object.body.removeEventListener("collide", playHitSound);
+    world.removeBody(object.body);
+    scene.remove(object.mesh);
+    objectsToUpdate.splice(objectsToUpdate.indexOf(object), 1);
+  }
+};
+
+debugObject.createBox = () => {
+  createBox(Math.random(), Math.random(), Math.random(), {
+    x: (Math.random() - 0.5) * 3,
+    y: 3,
+    z: (Math.random() - 0.5) * 3,
+  });
+};
+
+gui.add(debugObject, "createSphere");
+gui.add(debugObject, "createBox");
+gui.add(debugObject, "reset");
 
 /**
  * Base
@@ -16,6 +46,21 @@ const canvas = document.querySelector("canvas.webgl");
 
 // Scene
 const scene = new THREE.Scene();
+
+// add sound
+const hitSound = new Audio("/sounds/hit.mp3");
+
+const playHitSound = (collision) => {
+  const impact = collision.contact.getImpactVelocityAlongNormal();
+
+  if (impact > 1.5) {
+    // play sound if the impact is greater than 1.5
+    hitSound.volume = Math.random();
+    hitSound.currentTime = 0;
+
+    hitSound.play();
+  }
+};
 
 /**
  * Textures
@@ -35,6 +80,10 @@ const environmentMapTexture = cubeTextureLoader.load([
 // create a physics world with cannon
 
 const world = new CANNON.World();
+// add broadphase to the world
+world.broadphase = new CANNON.SAPBroadphase(world);
+// add sleep mode to the world
+world.allowSleep = true;
 
 // set gravity
 world.gravity.set(0, -9.82, 0);
@@ -190,18 +239,21 @@ renderer.setSize(sizes.width, sizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 // Utils
+const objectsToUpdate = [];
+
+const sphereGeometry = new THREE.SphereGeometry(1, 32, 32);
+const material = new THREE.MeshStandardMaterial({
+  // @ts-ignore
+  metalness: 0.3,
+  roughness: 0.4,
+  envMap: environmentMapTexture,
+  envMapIntensity: 0.5,
+});
+
 const createSphere = (radius, position) => {
   // threejs sphere
-  const mesh = new THREE.Mesh(
-    new THREE.SphereGeometry(radius, 32, 32),
-    new THREE.MeshStandardMaterial({
-      // @ts-ignore
-      metalness: 0.3,
-      roughness: 0.4,
-      envMap: environmentMapTexture,
-      envMapIntensity: 0.5,
-    })
-  );
+  const mesh = new THREE.Mesh(sphereGeometry, material);
+  mesh.scale.set(radius, radius, radius);
   mesh.castShadow = true;
   mesh.position.copy(position);
   scene.add(mesh);
@@ -215,11 +267,54 @@ const createSphere = (radius, position) => {
     material: defaultMaterial,
   });
   body.position.copy(position);
+  // add event listener to the body to play sound when it hits the ground
+  body.addEventListener("collide", playHitSound);
   world.addBody(body);
+
+  // save in objects to update
+  objectsToUpdate.push({ mesh, body });
 };
 
 // call createSphere function
 createSphere(0.5, { x: 0, y: 3, z: 0 });
+
+// create a box
+const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
+const boxMaterial = new THREE.MeshStandardMaterial({
+  color: "red",
+  metalness: 0.3,
+  roughness: 0.4,
+  envMap: environmentMapTexture,
+});
+
+const createBox = (width, height, depth, position) => {
+  // threejs box
+  const mesh = new THREE.Mesh(boxGeometry, boxMaterial);
+  mesh.scale.set(width, height, depth);
+  mesh.castShadow = true;
+  mesh.position.copy(position);
+  scene.add(mesh);
+
+  // cannon body
+  const shape = new CANNON.Box(
+    new CANNON.Vec3(width / 2, height / 2, depth / 2)
+  );
+  const body = new CANNON.Body({
+    mass: 1,
+    shape,
+    position: new CANNON.Vec3(0, 3, 0),
+    material: defaultMaterial,
+  });
+  body.position.copy(position);
+  // add event listener to the body to play sound when it hits the ground
+  body.addEventListener("collide", playHitSound);
+  world.addBody(body);
+
+  // save in objects to update
+  objectsToUpdate.push({ mesh, body });
+};
+
+createBox(1, 1, 1, { x: 2, y: 3, z: 0 });
 
 /**
  * Animate
@@ -234,8 +329,14 @@ const tick = () => {
 
   // add wind to the world
   //   sphereBody.applyForce(new CANNON.Vec3(-0.5, 0, 0), sphereBody.position);
-  //   // update physics world
-  //   world.step(1 / 60, deltaTime, 3);
+  // update physics world
+  world.step(1 / 60, deltaTime, 3);
+
+  for (const object of objectsToUpdate) {
+    object.mesh.position.copy(object.body.position);
+    // this will make the object rotate with the physics body rotation
+    object.mesh.quaternion.copy(object.body.quaternion);
+  }
 
   //   // update three js sphere
   //   // @ts-ignore
